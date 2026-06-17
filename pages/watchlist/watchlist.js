@@ -205,6 +205,14 @@ function openEditModal(id) {
       <input type="text" id="edit-discount" value="${escapeAttr(item.discountInfo || '')}">
     </div>
     <div class="form-group">
+      <label>评价摘要</label>
+      <input type="text" id="edit-rating" value="${escapeAttr(item.ratingSummary || '')}">
+    </div>
+    <div class="form-group">
+      <label>规格 (JSON 格式，如 {"颜色":"黑","内存":"16G"})</label>
+      <textarea id="edit-specs" rows="3" placeholder='{"品牌":"Sony","型号":"WH-1000XM5","颜色":"黑色"}'>${item.specs && Object.keys(item.specs).length > 0 ? escapeHtml(JSON.stringify(item.specs, null, 2)) : ''}</textarea>
+    </div>
+    <div class="form-group">
       <label>备注</label>
       <textarea id="edit-notes" rows="3">${escapeHtml(item.notes || '')}</textarea>
     </div>
@@ -221,6 +229,17 @@ function closeModal() {
 async function handleSave() {
   if (!editingId) return;
 
+  const specsStr = document.getElementById('edit-specs').value.trim();
+  let specs = {};
+  if (specsStr) {
+    try {
+      specs = JSON.parse(specsStr);
+    } catch (e) {
+      alert('规格格式错误，请输入有效的 JSON 格式');
+      return;
+    }
+  }
+
   const updates = {
     name: document.getElementById('edit-name').value.trim(),
     targetPrice: parseFloat(document.getElementById('edit-target').value) || 0,
@@ -230,6 +249,8 @@ async function handleSave() {
     usage: document.getElementById('edit-usage').value.trim(),
     warranty: document.getElementById('edit-warranty').value.trim(),
     discountInfo: document.getElementById('edit-discount').value.trim(),
+    ratingSummary: document.getElementById('edit-rating').value.trim(),
+    specs,
     notes: document.getElementById('edit-notes').value.trim()
   };
 
@@ -256,7 +277,9 @@ async function addDemoItems() {
       notes: '黑色款优先',
       shipping: '免运费',
       warranty: '1年保修',
-      discountInfo: '满2000减100'
+      discountInfo: '满2000减100',
+      ratingSummary: '4.9分 / 10万+评价',
+      specs: { '品牌': 'Sony', '型号': 'WH-1000XM5', '颜色': '黑色', '续航': '30小时', '降噪': '主动降噪', '连接': '蓝牙5.2', '重量': '250g' }
     },
     {
       name: 'Apple iPad Air M2 11英寸',
@@ -269,7 +292,9 @@ async function addDemoItems() {
       notes: '256GB WiFi版',
       shipping: '免运费',
       warranty: '1年保修',
-      discountInfo: '教育优惠可用'
+      discountInfo: '教育优惠可用',
+      ratingSummary: '4.8分 / 5万+评价',
+      specs: { '品牌': 'Apple', '型号': 'iPad Air 6', '屏幕': '11英寸 Liquid Retina', '芯片': 'M2', '存储': '256GB', '网络': 'WiFi版', '重量': '462g' }
     },
     {
       name: '戴森 V15 Detect 吸尘器',
@@ -282,7 +307,9 @@ async function addDemoItems() {
       notes: '',
       shipping: '免运费',
       warranty: '2年保修',
-      discountInfo: ''
+      discountInfo: '',
+      ratingSummary: '4.9分 / 2万+评价',
+      specs: { '品牌': 'Dyson', '型号': 'V15 Detect', '吸力': '230AW', '续航': '60分钟', '尘筒': '0.76L', '重量': '3.09kg', '激光探测': '是' }
     },
     {
       name: '优衣库 Ultra Light 羽绒服',
@@ -295,7 +322,9 @@ async function addDemoItems() {
       notes: '黑色 M码',
       shipping: '运费8元',
       warranty: '',
-      discountInfo: '限时折扣'
+      discountInfo: '限时折扣',
+      ratingSummary: '4.7分 / 8万+评价',
+      specs: { '品牌': '优衣库', '系列': 'Ultra Light', '颜色': '黑色', '尺码': 'M', '填充物': '90%白鸭绒', '重量': '约200g' }
     },
     {
       name: 'Kindle Paperwhite 5',
@@ -308,7 +337,9 @@ async function addDemoItems() {
       notes: '',
       shipping: '免运费',
       warranty: '1年保修',
-      discountInfo: '会员专享价'
+      discountInfo: '会员专享价',
+      ratingSummary: '4.8分 / 3万+评价',
+      specs: { '品牌': 'Amazon', '型号': 'Kindle Paperwhite 5', '屏幕': '6.8英寸墨水屏', '存储': '8GB', '续航': '10周', '防水': 'IPX8', '背光': '可调暖光' }
     }
   ];
 

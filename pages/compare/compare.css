@@ -195,6 +195,48 @@
   width: 100%;
 }
 
+.card-specs {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.card-specs-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.card-specs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-spec-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.card-spec-item .spec-k {
+  color: var(--text-muted);
+  margin-right: 10px;
+}
+
+.card-spec-item .spec-v {
+  color: var(--text);
+  font-weight: 500;
+  text-align: right;
+}
+
+.spec-row td {
+  font-size: 12px;
+}
+
 .cell-bar-wrapper {
   display: flex;
   align-items: center;

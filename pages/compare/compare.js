@@ -56,6 +56,19 @@ async function renderCompare() {
   const maxPrice = Math.max(...items.map(i => i.currentPrice));
   const priceRange = maxPrice - minPrice || 1;
 
+  const allSpecKeys = [];
+  const specKeySet = new Set();
+  items.forEach(item => {
+    if (item.specs) {
+      Object.keys(item.specs).forEach(key => {
+        if (!specKeySet.has(key)) {
+          specKeySet.add(key);
+          allSpecKeys.push(key);
+        }
+      });
+    }
+  });
+
   const thead = document.getElementById('compare-head');
   thead.innerHTML = `<tr><th>属性</th>${items.map(i => `<th>${escapeHtml(i.name)}</th>`).join('')}</tr>`;
 
@@ -139,21 +152,45 @@ async function renderCompare() {
       label: '评价摘要',
       key: 'rating',
       render: (item) => `<td>${item.ratingSummary || '--'}</td>`
-    },
-    {
-      label: '备注',
-      key: 'notes',
-      render: (item) => `<td>${item.notes ? escapeHtml(item.notes) : '--'}</td>`
-    },
-    {
-      label: '状态',
-      key: 'status',
-      render: (item) => `<td><span class="badge ${item.status === 'active' ? 'badge-success' : 'badge-warning'}">${item.status === 'active' ? '观察中' : '已暂停'}</span></td>`
     }
   ];
 
+  if (allSpecKeys.length > 0) {
+    rows.push({
+      label: '── 规格参数 ──',
+      key: 'spec-divider',
+      render: () => '',
+      isDivider: true
+    });
+    allSpecKeys.forEach(key => {
+      rows.push({
+        label: key,
+        key: `spec-${key}`,
+        isSpec: true,
+        render: (item) => `<td>${item.specs && item.specs[key] ? escapeHtml(item.specs[key]) : '--'}</td>`
+      });
+    });
+  }
+
+  rows.push({
+    label: '备注',
+    key: 'notes',
+    render: (item) => `<td>${item.notes ? escapeHtml(item.notes) : '--'}</td>`
+  });
+  rows.push({
+    label: '状态',
+    key: 'status',
+    render: (item) => `<td><span class="badge ${item.status === 'active' ? 'badge-success' : 'badge-warning'}">${item.status === 'active' ? '观察中' : '已暂停'}</span></td>`
+  });
+
   const tbody = document.getElementById('compare-body');
   tbody.innerHTML = rows.map(row => {
+    if (row.isDivider) {
+      return `<tr><td class="row-label" style="text-align:center;font-weight:600;color:var(--text-secondary);">${row.label}</td>${items.map(() => '<td></td>').join('')}</tr>`;
+    }
+    if (row.isSpec) {
+      return `<tr class="spec-row"><td class="row-label">${row.label}</td>${items.map(i => row.render(i)).join('')}</tr>`;
+    }
     return `<tr><td class="row-label">${row.label}</td>${items.map(i => row.render(i)).join('')}</tr>`;
   }).join('');
 
@@ -162,6 +199,9 @@ async function renderCompare() {
     const low = getLowestPrice(item.priceHistory);
     const high = getHighestPrice(item.priceHistory);
     const fluctuation = getRecentFluctuation(item.priceHistory, 7);
+
+    const specEntries = item.specs ? Object.entries(item.specs).slice(0, 5) : [];
+    const hasSpecs = specEntries.length > 0;
 
     return `
       <div class="compare-card ${isCheapest ? 'best-price' : ''}">
@@ -181,6 +221,13 @@ async function renderCompare() {
           <div class="compare-card-row"><span class="label">保修</span><span class="value">${item.warranty || '--'}</span></div>
           <div class="compare-card-row"><span class="label">优惠</span><span class="value">${item.discountInfo || '--'}</span></div>
           <div class="compare-card-row"><span class="label">评价</span><span class="value">${item.ratingSummary || '--'}</span></div>
+          ${hasSpecs ? `
+            <div class="card-specs">
+              <div class="card-specs-title">规格参数</div>
+              <div class="card-specs-list">
+                ${specEntries.map(([k, v]) => `<div class="card-spec-item"><span class="spec-k">${escapeHtml(k)}</span><span class="spec-v">${escapeHtml(v)}</span></div>`).join('')}
+              </div>
+            </div>` : ''}
         </div>
         <button class="btn btn-sm btn-ghost compare-card-remove" data-id="${item.id}">✕ 移除</button>
       </div>`;

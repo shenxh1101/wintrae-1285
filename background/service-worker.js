@@ -1,6 +1,24 @@
 importScripts('../shared/storage.js');
 
-chrome.alarms.create('priceCheck', { periodInMinutes: 60 });
+const INTERVAL_MAP = {
+  realtime: 5,
+  hourly: 60,
+  daily: 1440,
+  weekly: 10080,
+  off: 0
+};
+
+async function initAlarm() {
+  const settings = await getSettings();
+  const minutes = INTERVAL_MAP[settings.reminderFrequency];
+  if (minutes && minutes > 0) {
+    chrome.alarms.clear('priceCheck', () => {
+      chrome.alarms.create('priceCheck', { periodInMinutes: minutes });
+    });
+  } else {
+    chrome.alarms.clear('priceCheck');
+  }
+}
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'priceCheck') {
@@ -22,7 +40,7 @@ async function checkAllPrices() {
     if (simulated !== item.currentPrice) {
       await addPriceRecord(item.id, simulated, '自动检测');
 
-      if (isTargetReached({ ...item, currentPrice: simulated })) {
+      if (settings.targetNotify !== false && isTargetReached({ ...item, currentPrice: simulated })) {
         chrome.notifications.create(`target-${item.id}`, {
           type: 'basic',
           iconUrl: 'icons/icon128.png',
@@ -32,7 +50,7 @@ async function checkAllPrices() {
       }
 
       const fluctuation = ((simulated - item.currentPrice) / item.currentPrice) * 100;
-      if (fluctuation <= -10) {
+      if (settings.dropNotify !== false && fluctuation <= -10) {
         chrome.notifications.create(`drop-${item.id}`, {
           type: 'basic',
           iconUrl: 'icons/icon128.png',
@@ -61,6 +79,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     checkAllPrices().then(() => sendResponse({ success: true }));
     return true;
   }
+  if (message.type === 'UPDATE_ALARM') {
+    initAlarm().then(() => sendResponse({ success: true }));
+    return true;
+  }
   if (message.type === 'GET_TAB_INFO') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       sendResponse({ url: tabs[0]?.url || '', title: tabs[0]?.title || '' });
@@ -70,5 +92,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create('priceCheck', { periodInMinutes: 60 });
+  initAlarm();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  initAlarm();
 });

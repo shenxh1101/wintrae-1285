@@ -47,21 +47,10 @@ async function saveFormSettings() {
   };
   await saveSettings(settings);
 
-  const intervalMap = {
-    realtime: 5,
-    hourly: 60,
-    daily: 1440,
-    weekly: 10080,
-    off: 0
-  };
-
-  if (chrome.alarms) {
-    const minutes = intervalMap[settings.reminderFrequency] || 60;
-    if (minutes > 0) {
-      chrome.alarms.create('priceCheck', { periodInMinutes: minutes });
-    } else {
-      chrome.alarms.clear('priceCheck');
-    }
+  try {
+    chrome.runtime.sendMessage({ type: 'UPDATE_ALARM' });
+  } catch (e) {
+    // ignore
   }
 }
 
