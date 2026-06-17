@@ -209,3 +209,153 @@
   font-size: 15px;
   font-weight: 600;
 }
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.analysis-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.analysis-card-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analysis-card-body {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.analysis-trend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.analysis-icon {
+  font-size: 18px;
+}
+
+.analysis-direction {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.analysis-pct {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.analysis-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.analysis-big-val {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.gap-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gap-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gap-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.gap-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 28px;
+}
+
+.analysis-card-buy {
+  grid-column: span 2;
+}
+
+.advice-level {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.advice-reason {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.advice-strong {
+  border-color: var(--success);
+  background: var(--success-light);
+}
+
+.advice-strong .advice-level {
+  color: var(--success);
+}
+
+.advice-good {
+  border-color: var(--success);
+  background: var(--success-light);
+}
+
+.advice-good .advice-level {
+  color: var(--success);
+}
+
+.advice-wait {
+  border-color: var(--warning);
+  background: var(--warning-light);
+}
+
+.advice-wait .advice-level {
+  color: var(--warning);
+}
+
+.advice-consider {
+  border-color: var(--danger);
+  background: var(--danger-light);
+}
+
+.advice-consider .advice-level {
+  color: var(--danger);
+}
+
+.advice-close {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.advice-close .advice-level {
+  color: var(--primary);
+}

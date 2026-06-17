@@ -1,17 +1,38 @@
+const COMPARE_SCHEMES_KEY = 'price_hunter_compare_schemes';
+const ACTIVE_SCHEME_KEY = 'price_hunter_active_scheme';
+
 let allItems = [];
-let compareIds = [];
+let schemes = [];
+let activeSchemeId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   allItems = await getAllItems();
+  schemes = await getStorage(COMPARE_SCHEMES_KEY) || [];
+  activeSchemeId = await getStorage(ACTIVE_SCHEME_KEY) || null;
+
   populateSelect();
+  renderSchemes();
   renderCompare();
 
   document.getElementById('btn-add-to-compare').addEventListener('click', addToCompare);
-  document.getElementById('btn-clear-compare').addEventListener('click', clearCompare);
+  document.getElementById('btn-clear-compare').addEventListener('click', clearCurrentScheme);
+  document.getElementById('btn-save-scheme').addEventListener('click', saveNewScheme);
+  document.getElementById('btn-export-compare').addEventListener('click', exportCompare);
 });
+
+async function saveSchemesToStorage() {
+  await setStorage(COMPARE_SCHEMES_KEY, schemes);
+  await setStorage(ACTIVE_SCHEME_KEY, activeSchemeId);
+}
+
+function getCompareIds() {
+  const scheme = schemes.find(s => s.id === activeSchemeId);
+  return scheme ? scheme.itemIds : [];
+}
 
 function populateSelect() {
   const select = document.getElementById('add-item-select');
+  const compareIds = getCompareIds();
   const available = allItems.filter(i => !compareIds.includes(i.id));
   select.innerHTML = '<option value="">选择商品添加到比较...</option>' +
     available.map(i => `<option value="${i.id}">${escapeHtml(i.name)} - ${formatPrice(i.currentPrice)}</option>`).join('');
@@ -20,22 +41,108 @@ function populateSelect() {
 function addToCompare() {
   const select = document.getElementById('add-item-select');
   const id = select.value;
-  if (!id || compareIds.includes(id)) return;
+  if (!id) return;
 
-  compareIds.push(id);
+  let scheme = schemes.find(s => s.id === activeSchemeId);
+  if (!scheme) {
+    scheme = { id: Date.now().toString(36), name: '新方案', itemIds: [] };
+    schemes.push(scheme);
+    activeSchemeId = scheme.id;
+  }
+
+  if (scheme.itemIds.includes(id)) return;
+  scheme.itemIds.push(id);
+  saveSchemesToStorage();
   populateSelect();
+  renderSchemes();
   renderCompare();
   select.value = '';
 }
 
-function clearCompare() {
-  compareIds = [];
+async function clearCurrentScheme() {
+  const scheme = schemes.find(s => s.id === activeSchemeId);
+  if (scheme) {
+    scheme.itemIds = [];
+    saveSchemesToStorage();
+  }
   populateSelect();
   renderCompare();
 }
 
+function saveNewScheme() {
+  const nameInput = document.getElementById('new-scheme-name');
+  const name = nameInput.value.trim();
+  if (!name) return;
+
+  const scheme = { id: Date.now().toString(36), name, itemIds: [] };
+  schemes.push(scheme);
+  activeSchemeId = scheme.id;
+  nameInput.value = '';
+  saveSchemesToStorage();
+  renderSchemes();
+  renderCompare();
+}
+
+function switchScheme(id) {
+  activeSchemeId = id;
+  saveSchemesToStorage();
+  populateSelect();
+  renderSchemes();
+  renderCompare();
+}
+
+function deleteScheme(id) {
+  schemes = schemes.filter(s => s.id !== id);
+  if (activeSchemeId === id) {
+    activeSchemeId = schemes.length > 0 ? schemes[0].id : null;
+  }
+  saveSchemesToStorage();
+  populateSelect();
+  renderSchemes();
+  renderCompare();
+}
+
+function renameScheme(id) {
+  const scheme = schemes.find(s => s.id === id);
+  if (!scheme) return;
+  const newName = prompt('输入方案名称：', scheme.name);
+  if (newName && newName.trim()) {
+    scheme.name = newName.trim();
+    saveSchemesToStorage();
+    renderSchemes();
+  }
+}
+
+function renderSchemes() {
+  const container = document.getElementById('scheme-tabs');
+  if (schemes.length === 0) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:13px;padding:8px 0;">暂无对比方案，添加商品或创建新方案</span>';
+    return;
+  }
+
+  container.innerHTML = schemes.map(s => `
+    <div class="scheme-tab ${s.id === activeSchemeId ? 'active' : ''}" data-id="${s.id}">
+      <span class="scheme-name" data-action="switch" data-id="${s.id}">${escapeHtml(s.name)}</span>
+      <span class="scheme-count">(${s.itemIds.length})</span>
+      <button class="scheme-rename" data-action="rename" data-id="${s.id}" title="重命名">✏️</button>
+      <button class="scheme-delete" data-action="delete-scheme" data-id="${s.id}" title="删除方案">✕</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('[data-action="switch"]').forEach(el => {
+    el.addEventListener('click', () => switchScheme(el.dataset.id));
+  });
+  container.querySelectorAll('[data-action="rename"]').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); renameScheme(btn.dataset.id); });
+  });
+  container.querySelectorAll('[data-action="delete-scheme"]').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); deleteScheme(btn.dataset.id); });
+  });
+}
+
 async function renderCompare() {
   allItems = await getAllItems();
+  const compareIds = getCompareIds();
   const items = compareIds.map(id => allItems.find(i => i.id === id)).filter(Boolean);
 
   const emptyEl = document.getElementById('compare-empty');
@@ -200,8 +307,18 @@ async function renderCompare() {
     const high = getHighestPrice(item.priceHistory);
     const fluctuation = getRecentFluctuation(item.priceHistory, 7);
 
-    const specEntries = item.specs ? Object.entries(item.specs).slice(0, 5) : [];
-    const hasSpecs = specEntries.length > 0;
+    let specsHtml = '';
+    if (allSpecKeys.length > 0) {
+      const specRows = allSpecKeys.map(key => {
+        const val = item.specs && item.specs[key] ? escapeHtml(item.specs[key]) : '--';
+        return `<div class="card-spec-item"><span class="spec-k">${escapeHtml(key)}</span><span class="spec-v ${val === '--' ? 'spec-empty' : ''}">${val}</span></div>`;
+      }).join('');
+      specsHtml = `
+        <div class="card-specs">
+          <div class="card-specs-title">规格参数</div>
+          <div class="card-specs-list">${specRows}</div>
+        </div>`;
+    }
 
     return `
       <div class="compare-card ${isCheapest ? 'best-price' : ''}">
@@ -221,13 +338,7 @@ async function renderCompare() {
           <div class="compare-card-row"><span class="label">保修</span><span class="value">${item.warranty || '--'}</span></div>
           <div class="compare-card-row"><span class="label">优惠</span><span class="value">${item.discountInfo || '--'}</span></div>
           <div class="compare-card-row"><span class="label">评价</span><span class="value">${item.ratingSummary || '--'}</span></div>
-          ${hasSpecs ? `
-            <div class="card-specs">
-              <div class="card-specs-title">规格参数</div>
-              <div class="card-specs-list">
-                ${specEntries.map(([k, v]) => `<div class="card-spec-item"><span class="spec-k">${escapeHtml(k)}</span><span class="spec-v">${escapeHtml(v)}</span></div>`).join('')}
-              </div>
-            </div>` : ''}
+          ${specsHtml}
         </div>
         <button class="btn btn-sm btn-ghost compare-card-remove" data-id="${item.id}">✕ 移除</button>
       </div>`;
@@ -235,11 +346,60 @@ async function renderCompare() {
 
   cardsEl.querySelectorAll('.compare-card-remove').forEach(btn => {
     btn.addEventListener('click', () => {
-      compareIds = compareIds.filter(id => id !== btn.dataset.id);
+      const scheme = schemes.find(s => s.id === activeSchemeId);
+      if (scheme) {
+        scheme.itemIds = scheme.itemIds.filter(id => id !== btn.dataset.id);
+        saveSchemesToStorage();
+      }
       populateSelect();
       renderCompare();
     });
   });
+}
+
+function exportCompare() {
+  const scheme = schemes.find(s => s.id === activeSchemeId);
+  if (!scheme || scheme.itemIds.length === 0) {
+    alert('当前方案中没有商品');
+    return;
+  }
+
+  const items = scheme.itemIds.map(id => allItems.find(i => i.id === id)).filter(Boolean);
+  const schemeName = scheme.name;
+
+  let csv = `对比方案: ${schemeName}\n\n`;
+  const headers = ['属性', ...items.map(i => i.name)];
+  csv += headers.map(h => `"${h}"`).join(',') + '\n';
+
+  const rows = [
+    ['当前价格', ...items.map(i => i.currentPrice)],
+    ['目标价格', ...items.map(i => i.targetPrice || '--')],
+    ['预算上限', ...items.map(i => i.budget || '--')],
+    ['平台', ...items.map(i => i.platform)],
+    ['分类', ...items.map(i => i.category)],
+    ['运费', ...items.map(i => i.shipping || '--')],
+    ['保修', ...items.map(i => i.warranty || '--')],
+    ['优惠说明', ...items.map(i => i.discountInfo || '--')],
+    ['用途', ...items.map(i => i.usage || '--')],
+    ['评价摘要', ...items.map(i => i.ratingSummary || '--')],
+    ['备注', ...items.map(i => i.notes || '--')]
+  ];
+
+  const allSpecKeys = new Set();
+  items.forEach(i => { if (i.specs) Object.keys(i.specs).forEach(k => allSpecKeys.add(k)); });
+  allSpecKeys.forEach(key => {
+    rows.push([key, ...items.map(i => i.specs && i.specs[key] ? i.specs[key] : '--')]);
+  });
+
+  csv += rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `对比方案-${schemeName}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function escapeHtml(str) {

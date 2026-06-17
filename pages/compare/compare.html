@@ -13,12 +13,24 @@
   </div>
 
   <div class="page-body">
+    <div class="scheme-section">
+      <div class="scheme-bar">
+        <span class="scheme-label">对比方案：</span>
+        <div class="scheme-tabs" id="scheme-tabs"></div>
+        <div class="scheme-create">
+          <input type="text" id="new-scheme-name" placeholder="方案名称，如：通勤耳机" class="scheme-input">
+          <button class="btn btn-sm btn-primary" id="btn-save-scheme">新建方案</button>
+        </div>
+      </div>
+    </div>
+
     <div class="add-bar">
       <select id="add-item-select" class="add-select">
         <option value="">选择商品添加到比较...</option>
       </select>
       <button class="btn btn-primary" id="btn-add-to-compare">➕ 添加</button>
-      <button class="btn btn-ghost" id="btn-clear-compare">🗑 清空</button>
+      <button class="btn btn-ghost" id="btn-clear-compare">🗑 清空当前</button>
+      <button class="btn btn-outline" id="btn-export-compare">📥 导出对比</button>
     </div>
 
     <div id="compare-empty" class="empty-state">

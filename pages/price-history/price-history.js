@@ -33,10 +33,12 @@ async function onItemSelect() {
   document.getElementById('empty-state').classList.add('hidden');
   document.getElementById('chart-section').classList.remove('hidden');
   document.getElementById('stats-section').classList.remove('hidden');
+  document.getElementById('analysis-section').classList.remove('hidden');
   document.getElementById('records-section').classList.remove('hidden');
 
   renderChart();
   renderStats();
+  renderAnalysis();
   renderRecords();
 }
 
@@ -196,6 +198,132 @@ function renderRecords() {
   }).join('');
 }
 
+function renderAnalysis() {
+  if (!currentItem || !currentItem.priceHistory || currentItem.priceHistory.length === 0) return;
+
+  const history = currentItem.priceHistory;
+  const low = getLowestPrice(history);
+  const high = getHighestPrice(history);
+
+  const f7 = getRecentFluctuation(history, 7);
+  const f30 = getRecentFluctuation(history, 30);
+
+  const trendLabel = (f) => f.trend === 'down' ? '下降' : f.trend === 'up' ? '上升' : '平稳';
+  const trendIcon = (f) => f.trend === 'down' ? '📉' : f.trend === 'up' ? '📈' : '➡️';
+  const trendCls = (f) => f.trend === 'down' ? 'price-down' : f.trend === 'up' ? 'price-up' : 'price-same';
+
+  document.getElementById('analysis-7d').innerHTML = `
+    <div class="analysis-trend ${trendCls(f7)}">
+      <span class="analysis-icon">${trendIcon(f7)}</span>
+      <span class="analysis-direction">${trendLabel(f7)}</span>
+      <span class="analysis-pct">${f7.percent.toFixed(1)}%</span>
+    </div>
+    <div class="analysis-detail">变化金额: ${f7.trend === 'stable' ? '--' : formatPrice(f7.change)}</div>
+  `;
+
+  document.getElementById('analysis-30d').innerHTML = `
+    <div class="analysis-trend ${trendCls(f30)}">
+      <span class="analysis-icon">${trendIcon(f30)}</span>
+      <span class="analysis-direction">${trendLabel(f30)}</span>
+      <span class="analysis-pct">${f30.percent.toFixed(1)}%</span>
+    </div>
+    <div class="analysis-detail">变化金额: ${f30.trend === 'stable' ? '--' : formatPrice(f30.change)}</div>
+  `;
+
+  if (low !== null) {
+    const lowestRecord = history.reduce((min, r) => r.price < min.price ? r : min, history[0]);
+    const daysSinceLow = Math.floor((Date.now() - new Date(lowestRecord.date).getTime()) / 86400000);
+    document.getElementById('analysis-lowest-time').innerHTML = `
+      <div class="analysis-big-val price-down">${formatPrice(low)}</div>
+      <div class="analysis-detail">出现于 ${formatDate(lowestRecord.date)}</div>
+      <div class="analysis-detail">${daysSinceLow === 0 ? '今天' : daysSinceLow + ' 天前'}</div>
+    `;
+  } else {
+    document.getElementById('analysis-lowest-time').innerHTML = '<div class="analysis-detail">暂无数据</div>';
+  }
+
+  if (currentItem.targetPrice > 0) {
+    const gap = currentItem.currentPrice - currentItem.targetPrice;
+    const gapPct = ((gap / currentItem.targetPrice) * 100).toFixed(1);
+    const reached = isTargetReached(currentItem);
+    document.getElementById('analysis-target-gap').innerHTML = reached
+      ? `<div class="analysis-big-val price-down">✅ 已达标</div>
+         <div class="analysis-detail">当前价低于目标价 ${formatPrice(Math.abs(gap))}</div>`
+      : `<div class="analysis-big-val price-up">还差 ${formatPrice(gap)}</div>
+         <div class="analysis-detail">距目标价 ${gapPct}%</div>
+         <div class="gap-bar-wrapper">
+           <div class="gap-bar-bg">
+             <div class="gap-bar-fill" style="width:${Math.max(5, 100 - parseFloat(gapPct))}%"></div>
+           </div>
+           <span class="gap-bar-label">${(100 - parseFloat(gapPct)).toFixed(0)}%</span>
+         </div>`;
+  } else {
+    document.getElementById('analysis-target-gap').innerHTML = '<div class="analysis-detail">未设定目标价</div>';
+  }
+
+  const advice = generateBuyAdvice(currentItem, history, low, high, f7, f30);
+  const buyCard = document.getElementById('analysis-buy-card');
+  buyCard.className = `analysis-card analysis-card-buy advice-${advice.level}`;
+  document.getElementById('analysis-buy-advice').innerHTML = `
+    <div class="advice-level">${advice.icon} ${advice.label}</div>
+    <div class="advice-reason">${advice.reason}</div>
+  `;
+}
+
+function generateBuyAdvice(item, history, low, high, f7, f30) {
+  if (isTargetReached(item)) {
+    return {
+      level: 'strong',
+      icon: '🟢',
+      label: '强烈建议买入',
+      reason: `当前价 ${formatPrice(item.currentPrice)} 已达到目标价 ${formatPrice(item.targetPrice)}，符合您的预期价格。`
+    };
+  }
+
+  if (low !== null && item.currentPrice <= low * 1.05) {
+    return {
+      level: 'good',
+      icon: '🟢',
+      label: '建议买入',
+      reason: `当前价接近历史最低 ${formatPrice(low)}，处于低价区间，性价比较高。`
+    };
+  }
+
+  if (f7.trend === 'down' && f7.percent > 5) {
+    return {
+      level: 'wait',
+      icon: '🟡',
+      label: '可再观望',
+      reason: `近期价格呈下降趋势（7日↓${f7.percent.toFixed(1)}%），可能继续走低，建议持续观察。`
+    };
+  }
+
+  if (f7.trend === 'up' && f7.percent > 3) {
+    return {
+      level: 'consider',
+      icon: '🟠',
+      label: '考虑入手',
+      reason: `近期价格呈上升趋势（7日↑${f7.percent.toFixed(1)}%），如需购买可考虑尽早入手避免涨价。`
+    };
+  }
+
+  if (item.targetPrice > 0 && item.currentPrice <= item.targetPrice * 1.1) {
+    return {
+      level: 'close',
+      icon: '🟡',
+      label: '接近目标',
+      reason: `当前价距目标价仅差 ${formatPrice(item.currentPrice - item.targetPrice)}，可以关注是否有优惠活动。`
+    };
+  }
+
+  return {
+    level: 'wait',
+    icon: '⚪',
+    label: '继续观察',
+    reason: '价格波动较小，暂无明显买入信号，建议继续观察等待更好时机。'
+  };
+}
+
 async function simulatePriceUpdate() {
   if (!currentItem) {
     alert('请先选择一个商品');
@@ -214,6 +342,7 @@ async function simulatePriceUpdate() {
 
   renderChart();
   renderStats();
+  renderAnalysis();
   renderRecords();
 }
 

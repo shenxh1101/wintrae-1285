@@ -1,15 +1,18 @@
+const FILTER_VIEW_KEY = 'price_hunter_watchlist_filter';
+
 let allItems = [];
 let editingId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   allItems = await getAllItems();
+  await restoreFilterView();
   initFilters();
   renderList();
 
-  document.getElementById('search-input').addEventListener('input', renderList);
-  document.getElementById('filter-category').addEventListener('change', renderList);
-  document.getElementById('filter-status').addEventListener('change', renderList);
-  document.getElementById('sort-by').addEventListener('change', renderList);
+  document.getElementById('search-input').addEventListener('input', debounce(renderList, 300));
+  document.getElementById('filter-category').addEventListener('change', onFilterChange);
+  document.getElementById('filter-status').addEventListener('change', onFilterChange);
+  document.getElementById('sort-by').addEventListener('change', onFilterChange);
 
   document.getElementById('btn-add-demo').addEventListener('click', addDemoItems);
 
@@ -19,10 +22,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('edit-save').addEventListener('click', handleSave);
 });
 
+async function restoreFilterView() {
+  const saved = await getStorage(FILTER_VIEW_KEY);
+  if (saved) {
+    if (saved.search) document.getElementById('search-input').value = saved.search;
+    if (saved.category) {
+      const catSelect = document.getElementById('filter-category');
+      const opt = Array.from(catSelect.options).find(o => o.value === saved.category);
+      if (opt) catSelect.value = saved.category;
+    }
+    if (saved.status) document.getElementById('filter-status').value = saved.status;
+    if (saved.sortBy) document.getElementById('sort-by').value = saved.sortBy;
+  }
+}
+
+async function saveFilterView() {
+  const view = {
+    search: document.getElementById('search-input').value,
+    category: document.getElementById('filter-category').value,
+    status: document.getElementById('filter-status').value,
+    sortBy: document.getElementById('sort-by').value
+  };
+  await setStorage(FILTER_VIEW_KEY, view);
+}
+
+function onFilterChange() {
+  saveFilterView();
+  renderList();
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => { fn.apply(this, args); saveFilterView(); }, ms);
+  };
+}
+
 function initFilters() {
   const categories = getCategories(allItems);
   const select = document.getElementById('filter-category');
+  const currentVal = select.value;
   select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  const opt = Array.from(select.options).find(o => o.value === currentVal);
+  if (opt) select.value = currentVal;
+  else select.value = '全部';
 }
 
 async function renderList() {
