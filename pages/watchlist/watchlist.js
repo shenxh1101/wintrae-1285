@@ -5,8 +5,8 @@ let editingId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   allItems = await getAllItems();
-  await restoreFilterView();
   initFilters();
+  await restoreFilterView();
   renderList();
 
   document.getElementById('search-input').addEventListener('input', debounce(renderList, 300));
@@ -63,7 +63,8 @@ function initFilters() {
   const categories = getCategories(allItems);
   const select = document.getElementById('filter-category');
   const currentVal = select.value;
-  select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  select.innerHTML = '<option value="全部">全部分类</option>' +
+    categories.map(c => `<option value="${c}">${c}</option>`).join('');
   const opt = Array.from(select.options).find(o => o.value === currentVal);
   if (opt) select.value = currentVal;
   else select.value = '全部';

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>价格预警 - 价格猎手</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="alerts.css">
+</head>
+<body>
+  <div class="page-header">
+    <h1>🔔 价格预警中心</h1>
+    <div class="header-actions">
+      <button class="btn btn-sm btn-ghost" id="btn-mark-all-read">✓ 全部标记已读</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="alert-tabs">
+      <button class="alert-tab active" data-tab="all">
+        <span class="tab-icon">📋</span>
+        <span class="tab-label">全部</span>
+        <span class="tab-count" id="count-all">0</span>
+      </button>
+      <button class="alert-tab" data-tab="reached">
+        <span class="tab-icon">🎯</span>
+        <span class="tab-label">达标</span>
+        <span class="tab-count" id="count-reached">0</span>
+      </button>
+      <button class="alert-tab" data-tab="dropping">
+        <span class="tab-icon">📉</span>
+        <span class="tab-label">降价</span>
+        <span class="tab-count" id="count-dropping">0</span>
+      </button>
+      <button class="alert-tab" data-tab="rising">
+        <span class="tab-icon">📈</span>
+        <span class="tab-label">涨价</span>
+        <span class="tab-count" id="count-rising">0</span>
+      </button>
+      <button class="alert-tab" data-tab="overbudget">
+        <span class="tab-icon">⚠️</span>
+        <span class="tab-label">超预算</span>
+        <span class="tab-count" id="count-overbudget">0</span>
+      </button>
+    </div>
+
+    <div id="alerts-empty" class="empty-state">
+      <div class="icon">🔔</div>
+      <div class="title">暂无预警</div>
+      <div class="desc">当前分类下没有价格预警，去观察清单添加商品吧</div>
+    </div>
+
+    <div id="alerts-list" class="alerts-list"></div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="alerts.js"></script>
+</body>
+</html>

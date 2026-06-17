@@ -7,6 +7,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('item-select').addEventListener('change', onItemSelect);
   document.getElementById('btn-simulate').addEventListener('click', simulatePriceUpdate);
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) {
+    document.getElementById('item-select').value = id;
+    await onItemSelect();
+  }
 });
 
 function populateSelect() {
@@ -18,9 +25,7 @@ function populateSelect() {
 async function onItemSelect() {
   const id = document.getElementById('item-select').value;
   if (!id) {
-    document.getElementById('chart-section').classList.add('hidden');
-    document.getElementById('stats-section').classList.add('hidden');
-    document.getElementById('records-section').classList.add('hidden');
+    hideAllSections();
     document.getElementById('empty-state').classList.remove('hidden');
     currentItem = null;
     return;
@@ -40,6 +45,13 @@ async function onItemSelect() {
   renderStats();
   renderAnalysis();
   renderRecords();
+}
+
+function hideAllSections() {
+  document.getElementById('chart-section').classList.add('hidden');
+  document.getElementById('stats-section').classList.add('hidden');
+  document.getElementById('analysis-section').classList.add('hidden');
+  document.getElementById('records-section').classList.add('hidden');
 }
 
 function renderChart() {

@@ -1,0 +1,220 @@
+.alert-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.alert-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.alert-tab:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.alert-tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.alert-tab .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.alert-tab:not(.active) .tab-count {
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.alert-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.alert-card.unread {
+  border-left: 4px solid var(--primary);
+}
+
+.alert-card.type-reached {
+  border-left: 4px solid var(--success);
+}
+
+.alert-card.type-dropping {
+  border-left: 4px solid var(--success);
+}
+
+.alert-card.type-rising {
+  border-left: 4px solid var(--danger);
+}
+
+.alert-card.type-overbudget {
+  border-left: 4px solid var(--warning);
+}
+
+.alert-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.alert-reason {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.alert-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.alert-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alert-price-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.alert-price-item {
+  font-size: 13px;
+}
+
+.alert-price-item .label {
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+
+.alert-price-item .value {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.alert-price-item .value.price-down {
+  color: var(--success);
+}
+
+.alert-price-item .value.price-up {
+  color: var(--danger);
+}
+
+.alert-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.alert-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.alert-badge.badge-reached {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.alert-badge.badge-dropping {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.alert-badge.badge-rising {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.alert-badge.badge-overbudget {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state .title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.empty-state .desc {
+  font-size: 14px;
+  color: var(--text-muted);
+}
