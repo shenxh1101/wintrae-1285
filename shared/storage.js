@@ -151,6 +151,53 @@ function getRecentFluctuation(priceHistory, days) {
   return { trend, change: Math.abs(change), percent: Math.abs(percent) };
 }
 
+function getConsecutiveDropInfo(priceHistory, minDays) {
+  if (!priceHistory || priceHistory.length < 2) {
+    return { consecutive: false, days: 0, totalDrop: 0, dropPercent: 0 };
+  }
+
+  const sorted = [...priceHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (sorted.length < 2) {
+    return { consecutive: false, days: 0, totalDrop: 0, dropPercent: 0 };
+  }
+
+  let consecutiveDays = 0;
+  let lastDate = null;
+  let currentPrice = sorted[0].price;
+  let startPrice = sorted[0].price;
+  let allDropping = true;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prevRecord = sorted[i - 1];
+    const currRecord = sorted[i];
+
+    const prevDate = new Date(prevRecord.date);
+    const currDate = new Date(currRecord.date);
+
+    if (currRecord.price < prevRecord.price) {
+      consecutiveDays++;
+      currentPrice = currRecord.price;
+      lastDate = currDate;
+    } else {
+      allDropping = false;
+      break;
+    }
+  }
+
+  const totalDrop = startPrice - currentPrice;
+  const dropPercent = startPrice !== 0 ? (totalDrop / startPrice) * 100 : 0;
+  const isConsecutive = consecutiveDays >= (minDays || 3);
+
+  return {
+    consecutive: isConsecutive,
+    days: consecutiveDays,
+    totalDrop,
+    dropPercent,
+    startPrice,
+    currentPrice
+  };
+}
+
 function isTargetReached(item) {
   if (!item.targetPrice || item.targetPrice <= 0) return false;
   return item.currentPrice <= item.targetPrice;

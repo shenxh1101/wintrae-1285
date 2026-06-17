@@ -34,6 +34,7 @@ function generateAlerts() {
     if (state.ignoredUntil && state.ignoredUntil > Date.now()) return;
 
     const f7 = getRecentFluctuation(item.priceHistory, 7);
+    const consecutiveDrop = getConsecutiveDropInfo(item.priceHistory, 3);
 
     if (isTargetReached(item)) {
       currentAlerts.push({
@@ -46,12 +47,12 @@ function generateAlerts() {
       });
     }
 
-    if (f7.trend === 'down' && f7.percent >= 5) {
+    if (consecutiveDrop.consecutive && consecutiveDrop.dropPercent >= 3) {
       currentAlerts.push({
         item,
         type: 'dropping',
         typeLabel: '📉 连续降价',
-        reason: `近7天价格下降 ${f7.percent.toFixed(1)}%，累计降价 ${formatPrice(f7.change)}`,
+        reason: `已连续 ${consecutiveDrop.days} 次降价，累计下跌 ${formatPrice(consecutiveDrop.totalDrop)}（${consecutiveDrop.dropPercent.toFixed(1)}%）`,
         icon: '📉',
         read: state.read?.dropping || false
       });
@@ -159,7 +160,7 @@ function renderAlerts() {
   list.querySelectorAll('[data-action="view"]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
-      window.location.href = `../price-history/price-history.html?id=${id}`;
+      window.open(`../price-history/price-history.html?id=${id}`, '_blank');
     });
   });
 

@@ -657,10 +657,21 @@
   box-shadow: 0 0 0 1px var(--primary);
 }
 
-.compare-card-top {
-  background: var(--primary) !important;
+.compare-card-overbudget {
+  background: var(--warning) !important;
   right: auto;
   left: 16px;
+  top: 48px;
+}
+
+.compare-card.over-budget {
+  opacity: 0.7;
+  border-color: var(--warning);
+}
+
+.rec-reason.rec-reason-warn {
+  background: var(--danger-light) !important;
+  color: var(--danger) !important;
 }
 
 .compare-card-score {

@@ -41,6 +41,62 @@ function getActiveScheme() {
   return schemes.find(s => s.id === activeSchemeId);
 }
 
+function calculateAndRankItems(items, scheme) {
+  const allSpecKeys = [];
+  const specKeySet = new Set();
+  items.forEach(item => {
+    if (item.specs) {
+      Object.keys(item.specs).forEach(key => {
+        if (!specKeySet.has(key)) {
+          specKeySet.add(key);
+          allSpecKeys.push(key);
+        }
+      });
+    }
+  });
+
+  const weights = scheme?.weights || DEFAULT_WEIGHTS;
+  const weightSum = weights.price + weights.warranty + weights.rating + weights.specs || 1;
+  const schemeBudget = scheme?.budget || 0;
+
+  const scoredItems = items.map(item => ({
+    item,
+    scores: calculateScores(item, items, allSpecKeys),
+    totalScore: 0,
+    isOverBudget: false,
+    budgetPenalty: 1
+  }));
+
+  scoredItems.forEach(si => {
+    let rawScore = (
+      si.scores.price * weights.price +
+      si.scores.warranty * weights.warranty +
+      si.scores.rating * weights.rating +
+      si.scores.specs * weights.specs
+    ) / weightSum;
+
+    if (schemeBudget > 0 && si.item.currentPrice > schemeBudget) {
+      si.isOverBudget = true;
+      const overPct = (si.item.currentPrice - schemeBudget) / schemeBudget;
+      si.budgetPenalty = Math.max(0.3, 1 - overPct * 1.5);
+    }
+
+    if (si.item.budget > 0 && si.item.currentPrice > si.item.budget) {
+      si.isOverBudget = true;
+      const overPct = (si.item.currentPrice - si.item.budget) / si.item.budget;
+      const itemPenalty = Math.max(0.3, 1 - overPct * 1.5);
+      si.budgetPenalty = Math.min(si.budgetPenalty, itemPenalty);
+    }
+
+    si.totalScore = rawScore * si.budgetPenalty;
+  });
+
+  scoredItems.sort((a, b) => b.totalScore - a.totalScore);
+  scoredItems.forEach((si, idx) => { si.rank = idx + 1; });
+
+  return { scoredItems, allSpecKeys, weights };
+}
+
 async function saveSchemesToStorage() {
   await setStorage(COMPARE_SCHEMES_KEY, schemes);
   await setStorage(ACTIVE_SCHEME_KEY, activeSchemeId);
@@ -247,56 +303,26 @@ async function renderCompare() {
   emptyEl.style.display = 'none';
   contentEl.classList.remove('hidden');
 
-  if (scheme) {
-    document.querySelector('.settings-header h3').textContent = `⚙️ 方案设置 - ${scheme.name}`;
-    loadSchemeSettings();
-  }
-
   const minPrice = Math.min(...items.map(i => i.currentPrice));
   const maxPrice = Math.max(...items.map(i => i.currentPrice));
   const priceRange = maxPrice - minPrice || 1;
 
-  const allSpecKeys = [];
-  const specKeySet = new Set();
-  items.forEach(item => {
-    if (item.specs) {
-      Object.keys(item.specs).forEach(key => {
-        if (!specKeySet.has(key)) {
-          specKeySet.add(key);
-          allSpecKeys.push(key);
-        }
-      });
-    }
-  });
-
-  const scoredItems = items.map(item => ({
-    item,
-    scores: calculateScores(item, items, allSpecKeys),
-    totalScore: 0
-  }));
-
-  const weights = scheme?.weights || DEFAULT_WEIGHTS;
-  const weightSum = weights.price + weights.warranty + weights.rating + weights.specs || 1;
-
-  scoredItems.forEach(si => {
-    si.totalScore = (
-      si.scores.price * weights.price +
-      si.scores.warranty * weights.warranty +
-      si.scores.rating * weights.rating +
-      si.scores.specs * weights.specs
-    ) / weightSum;
-  });
-
-  scoredItems.sort((a, b) => b.totalScore - a.totalScore);
-  scoredItems.forEach((si, idx) => { si.rank = idx + 1; });
+  const { scoredItems, allSpecKeys, weights } = calculateAndRankItems(items, scheme);
 
   const scoreMap = {};
   scoredItems.forEach(si => { scoreMap[si.item.id] = si; });
 
   if (items.length >= 2) {
+    settingsEl.classList.remove('hidden');
     recEl.classList.remove('hidden');
     renderRecommendation(scoredItems, scheme);
+
+    if (scheme) {
+      document.querySelector('.settings-header h3').textContent = `⚙️ 方案设置 - ${scheme.name}`;
+      loadSchemeSettings();
+    }
   } else {
+    settingsEl.classList.add('hidden');
     recEl.classList.add('hidden');
   }
 
@@ -307,8 +333,10 @@ async function renderCompare() {
     return `<th>${rankBadge} ${escapeHtml(i.name)}</th>`;
   }).join('')}</tr>`;
 
-  const rows = [
-    {
+  const rows = [];
+
+  if (items.length >= 2) {
+    rows.push({
       label: '综合得分',
       key: 'score',
       render: (item) => {
@@ -316,7 +344,10 @@ async function renderCompare() {
         return `<td><div class="cell-score">${si.totalScore.toFixed(1)}<span class="score-max">/100</span></div>
           <div class="score-bar-bg"><div class="score-bar-fill" style="width:${si.totalScore}%"></div></div></td>`;
       }
-    },
+    });
+  }
+
+  rows.push(
     {
       label: '当前价格',
       key: 'price',
@@ -460,9 +491,10 @@ async function renderCompare() {
     }
 
     return `
-      <div class="compare-card ${isCheapest ? 'best-price' : ''} ${isTop ? 'top-ranked' : ''}">
+      <div class="compare-card ${isCheapest ? 'best-price' : ''} ${isTop ? 'top-ranked' : ''} ${si.isOverBudget ? 'over-budget' : ''}">
         ${isTop ? '<div class="compare-card-best compare-card-top">🏆 推荐 #1</div>' : ''}
         ${isCheapest && !isTop ? '<div class="compare-card-best">💰 最低价</div>' : ''}
+        ${si.isOverBudget ? '<div class="compare-card-best compare-card-overbudget">⚠️ 超预算</div>' : ''}
         <div class="compare-card-head">
           <div class="compare-card-name">${escapeHtml(item.name)}</div>
           <div class="compare-card-price">${formatPrice(item.currentPrice)}</div>
@@ -581,12 +613,13 @@ function renderRecommendation(scoredItems, scheme) {
     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
 
     const reasons = [];
-    if (si.scores.price >= 80) reasons.push('价格有优势');
-    if (si.scores.warranty >= 80) reasons.push('保修有保障');
-    if (si.scores.rating >= 80) reasons.push('评价优秀');
-    if (si.scores.specs >= 80) reasons.push('规格丰富');
-    if (isTargetReached(item)) reasons.push('已达目标价');
-    if (scheme && scheme.budget && item.currentPrice <= scheme.budget) reasons.push('在预算内');
+    if (si.isOverBudget) reasons.push({ text: '⚠️ 超预算', warn: true });
+    else if (si.scores.price >= 80) reasons.push({ text: '价格有优势' });
+    if (si.scores.warranty >= 80) reasons.push({ text: '保修有保障' });
+    if (si.scores.rating >= 80) reasons.push({ text: '评价优秀' });
+    if (si.scores.specs >= 80) reasons.push({ text: '规格丰富' });
+    if (isTargetReached(item)) reasons.push({ text: '已达目标价' });
+    if (scheme && scheme.budget && item.currentPrice <= scheme.budget) reasons.push({ text: '在预算内' });
 
     return `
       <div class="rec-item ${isTop ? 'rec-top' : ''}">
@@ -594,7 +627,7 @@ function renderRecommendation(scoredItems, scheme) {
         <div class="rec-info">
           <div class="rec-name">${escapeHtml(item.name)}</div>
           <div class="rec-reasons">
-            ${reasons.map(r => `<span class="rec-reason">${r}</span>`).join('')}
+            ${reasons.map(r => `<span class="rec-reason ${r.warn ? 'rec-reason-warn' : ''}">${r.text}</span>`).join('')}
           </div>
         </div>
         <div class="rec-score">
@@ -617,29 +650,13 @@ function exportCompare() {
   const items = scheme.itemIds.map(id => allItems.find(i => i.id === id)).filter(Boolean);
   const schemeName = scheme.name;
 
-  const weights = scheme.weights || DEFAULT_WEIGHTS;
-  const weightSum = weights.price + weights.warranty + weights.rating + weights.specs || 1;
+  const { scoredItems, weights } = calculateAndRankItems(items, scheme);
+
+  const scoreMap = {};
+  scoredItems.forEach(si => { scoreMap[si.item.id] = si; });
 
   const allSpecKeys = new Set();
   items.forEach(i => { if (i.specs) Object.keys(i.specs).forEach(k => allSpecKeys.add(k)); });
-
-  const scoredItems = items.map(item => ({
-    item,
-    scores: calculateScores(item, items, Array.from(allSpecKeys)),
-    totalScore: 0
-  }));
-
-  scoredItems.forEach(si => {
-    si.totalScore = (
-      si.scores.price * weights.price +
-      si.scores.warranty * weights.warranty +
-      si.scores.rating * weights.rating +
-      si.scores.specs * weights.specs
-    ) / weightSum;
-  });
-  scoredItems.sort((a, b) => b.totalScore - a.totalScore);
-  const scoreMap = {};
-  scoredItems.forEach((si, idx) => { si.rank = idx + 1; scoreMap[si.item.id] = si; });
 
   let csv = `对比方案: ${schemeName}\n`;
   if (scheme.scene) csv += `购买场景: ${scheme.scene}\n`;
@@ -648,7 +665,9 @@ function exportCompare() {
 
   csv += `🏆 推荐排序 (按综合得分)\n`;
   scoredItems.forEach((si, idx) => {
-    csv += `第${idx + 1}名: ${si.item.name} - 综合得分 ${si.totalScore.toFixed(1)} - ${formatPrice(si.item.currentPrice)}\n`;
+    csv += `第${idx + 1}名: ${si.item.name} - 综合得分 ${si.totalScore.toFixed(1)} - ${formatPrice(si.item.currentPrice)}`;
+    if (si.isOverBudget) csv += ' (超预算)';
+    csv += '\n';
   });
   csv += `\n`;
 
@@ -658,6 +677,7 @@ function exportCompare() {
   const rows = [
     ['综合得分', ...items.map(i => scoreMap[i.id].totalScore.toFixed(1) + '/100')],
     ['推荐排名', ...items.map(i => `第${scoreMap[i.id].rank}名`)],
+    ['是否超预算', ...items.map(i => scoreMap[i.id].isOverBudget ? '是' : '否')],
     ['当前价格', ...items.map(i => i.currentPrice)],
     ['目标价格', ...items.map(i => i.targetPrice || '--')],
     ['预算上限', ...items.map(i => i.budget || '--')],
