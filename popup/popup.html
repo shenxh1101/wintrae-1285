@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=400">
+  <title>价格猎手</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="logo">
+        <span class="logo-icon">💰</span>
+        <span class="logo-text">价格猎手</span>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-page="dashboard" title="概览">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity="0.5"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity="0.5"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity="0.3"/></svg>
+        </button>
+        <button class="nav-btn" data-page="watchlist" title="观察清单">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h12M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button class="nav-btn" data-page="history" title="价格记录">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14V6M6 14V3M10 14V8M14 14V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <div id="page-dashboard" class="page active">
+      <div class="current-page-info" id="current-page-info">
+        <div class="current-page-loading">正在检测当前页面...</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">观察中</div>
+        </div>
+        <div class="stat-card stat-success">
+          <div class="stat-value" id="stat-reached">0</div>
+          <div class="stat-label">已达目标</div>
+        </div>
+        <div class="stat-card stat-warning">
+          <div class="stat-value" id="stat-dropping">0</div>
+          <div class="stat-label">价格下降</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h3>最近动态</h3>
+        <button class="btn btn-sm btn-ghost" id="btn-refresh">🔄 刷新</button>
+      </div>
+      <div id="recent-list" class="item-list"></div>
+    </div>
+
+    <div id="page-watchlist" class="page">
+      <div class="page-toolbar">
+        <div class="filter-group">
+          <select id="filter-category" class="filter-select">
+            <option value="全部">全部分类</option>
+          </select>
+        </div>
+        <div class="sort-group">
+          <select id="sort-by" class="filter-select">
+            <option value="updatedAt">最近更新</option>
+            <option value="currentPrice">价格升序</option>
+            <option value="currentPrice-desc">价格降序</option>
+            <option value="name">名称</option>
+          </select>
+        </div>
+      </div>
+      <div id="watchlist-items" class="item-list"></div>
+    </div>
+
+    <div id="page-history" class="page">
+      <div class="page-toolbar">
+        <select id="history-item-select" class="filter-select">
+          <option value="">选择商品查看价格记录</option>
+        </select>
+      </div>
+      <div id="price-chart" class="price-chart"></div>
+      <div id="history-records" class="history-records"></div>
+    </div>
+
+    <footer class="popup-footer">
+      <a href="../pages/watchlist/watchlist.html" class="footer-link" title="完整清单">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h12M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        清单
+      </a>
+      <a href="../pages/compare/compare.html" class="footer-link" title="商品比较">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="5" height="10" rx="1" fill="currentColor" opacity="0.5"/><rect x="10" y="1" width="5" height="12" rx="1" fill="currentColor" opacity="0.5"/></svg>
+        比较
+      </a>
+      <a href="../pages/price-history/price-history.html" class="footer-link" title="价格记录">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 14V6M6 14V3M10 14V8M14 14V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        记录
+      </a>
+      <a href="../pages/settings/settings.html" class="footer-link" title="设置">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        设置
+      </a>
+    </footer>
+  </div>
+
+  <div id="detail-modal" class="detail-modal hidden">
+    <div class="detail-overlay"></div>
+    <div class="detail-content">
+      <div class="detail-header">
+        <h3 id="detail-name"></h3>
+        <button class="detail-close" id="detail-close">✕</button>
+      </div>
+      <div class="detail-body" id="detail-body"></div>
+      <div class="detail-actions" id="detail-actions"></div>
+    </div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置 - 价格猎手</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="page-header">
+    <h1>⚙️ 设置</h1>
+  </div>
+
+  <div class="page-body">
+    <div class="settings-section">
+      <div class="section-title">
+        <span class="section-icon">🔔</span>
+        <div>
+          <h3>提醒设置</h3>
+          <p>配置价格变动的提醒频率和方式</p>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">提醒频率</div>
+          <div class="setting-desc">多久检查一次价格变动</div>
+        </div>
+        <div class="setting-control">
+          <select id="setting-frequency" class="setting-select">
+            <option value="realtime">实时（每5分钟）</option>
+            <option value="hourly">每小时</option>
+            <option value="daily">每天</option>
+            <option value="weekly">每周</option>
+            <option value="off">关闭提醒</option>
+          </select>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">目标价达到时通知</div>
+          <div class="setting-desc">当商品价格达到您设定的目标价时推送通知</div>
+        </div>
+        <div class="setting-control">
+          <label class="toggle">
+            <input type="checkbox" id="setting-target-notify" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">价格大幅下降通知</div>
+          <div class="setting-desc">当商品价格下降超过10%时推送通知</div>
+        </div>
+        <div class="setting-control">
+          <label class="toggle">
+            <input type="checkbox" id="setting-drop-notify" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">
+        <span class="section-icon">🚫</span>
+        <div>
+          <h3>屏蔽词管理</h3>
+          <p>包含屏蔽词的商品名称将被跳过价格检测</p>
+        </div>
+      </div>
+      <div class="blocked-words">
+        <div id="blocked-words-list" class="words-list"></div>
+        <div class="add-word-row">
+          <input type="text" id="new-blocked-word" placeholder="输入屏蔽词..." class="word-input">
+          <button class="btn btn-primary btn-sm" id="btn-add-word">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">
+        <span class="section-icon">📦</span>
+        <div>
+          <h3>数据管理</h3>
+          <p>导出和导入您的观察清单数据</p>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">导出为 JSON</div>
+          <div class="setting-desc">导出完整的观察清单数据（含价格历史）</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn btn-ghost btn-sm" id="btn-export-json">📥 导出 JSON</button>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">导出为 CSV</div>
+          <div class="setting-desc">导出简化的商品清单表格（可用 Excel 打开）</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn btn-ghost btn-sm" id="btn-export-csv">📥 导出 CSV</button>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">导入数据</div>
+          <div class="setting-desc">从 JSON 文件导入观察清单（将合并现有数据）</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn btn-ghost btn-sm" id="btn-import">📤 导入</button>
+          <input type="file" id="import-file" accept=".json" style="display:none;">
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">清空所有数据</div>
+          <div class="setting-desc">删除所有观察商品和价格记录，此操作不可撤销</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn btn-danger btn-sm" id="btn-clear-all">🗑 清空</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">
+        <span class="section-icon">🔧</span>
+        <div>
+          <h3>其他设置</h3>
+          <p>自定义扩展行为</p>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">自动检测商品页</div>
+          <div class="setting-desc">在支持的电商网站自动显示价格观察按钮</div>
+        </div>
+        <div class="setting-control">
+          <label class="toggle">
+            <input type="checkbox" id="setting-auto-detect" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">货币单位</div>
+          <div class="setting-desc">设置价格显示的货币</div>
+        </div>
+        <div class="setting-control">
+          <select id="setting-currency" class="setting-select">
+            <option value="CNY">¥ 人民币</option>
+            <option value="USD">$ 美元</option>
+            <option value="EUR">€ 欧元</option>
+            <option value="JPY">¥ 日元</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-footer">
+      <p>价格猎手 v1.0.0 · 安全可靠的网购价格观察助手</p>
+    </div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

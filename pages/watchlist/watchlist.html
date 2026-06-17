@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>观察清单 - 价格猎手</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="watchlist.css">
+</head>
+<body>
+  <div class="page-header">
+    <h1>📋 观察清单</h1>
+    <div class="header-actions">
+      <button class="btn btn-sm btn-ghost" id="btn-add-demo">添加示例</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="搜索商品名称...">
+        </div>
+        <select id="filter-category" class="filter-select">
+          <option value="全部">全部分类</option>
+        </select>
+        <select id="filter-status" class="filter-select">
+          <option value="all">全部状态</option>
+          <option value="active">观察中</option>
+          <option value="paused">已暂停</option>
+          <option value="reached">已达目标</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <select id="sort-by" class="filter-select">
+          <option value="updatedAt">最近更新</option>
+          <option value="createdAt">添加时间</option>
+          <option value="currentPrice">价格升序</option>
+          <option value="currentPrice-desc">价格降序</option>
+          <option value="name">名称排序</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="summary-bar">
+      <span id="summary-count">0 个商品</span>
+      <span id="summary-reached" class="stat-tag stat-tag-success">0 个达标</span>
+      <span id="summary-paused" class="stat-tag stat-tag-warning">0 个暂停</span>
+    </div>
+
+    <div id="watchlist-container" class="watchlist-container"></div>
+  </div>
+
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="edit-modal-title">编辑商品</h3>
+        <button class="modal-close" id="edit-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="edit-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="edit-cancel">取消</button>
+        <button class="btn btn-primary" id="edit-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="watchlist.js"></script>
+</body>
+</html>

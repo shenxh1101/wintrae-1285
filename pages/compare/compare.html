@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品比较 - 价格猎手</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="compare.css">
+</head>
+<body>
+  <div class="page-header">
+    <h1>⚖️ 商品比较</h1>
+  </div>
+
+  <div class="page-body">
+    <div class="add-bar">
+      <select id="add-item-select" class="add-select">
+        <option value="">选择商品添加到比较...</option>
+      </select>
+      <button class="btn btn-primary" id="btn-add-to-compare">➕ 添加</button>
+      <button class="btn btn-ghost" id="btn-clear-compare">🗑 清空</button>
+    </div>
+
+    <div id="compare-empty" class="empty-state">
+      <div class="icon">⚖️</div>
+      <div class="title">选择商品进行比较</div>
+      <div class="desc">从上方下拉列表中添加2个或更多商品，即可对比价格、规格、运费、保修和评价</div>
+    </div>
+
+    <div id="compare-content" class="compare-content hidden">
+      <div class="compare-table-wrapper">
+        <table class="compare-table" id="compare-table">
+          <thead id="compare-head"></thead>
+          <tbody id="compare-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="compare-cards" class="compare-cards"></div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="compare.js"></script>
+</body>
+</html>

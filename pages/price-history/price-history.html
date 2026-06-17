@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>价格记录 - 价格猎手</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="price-history.css">
+</head>
+<body>
+  <div class="page-header">
+    <h1>📊 价格记录</h1>
+  </div>
+
+  <div class="page-body">
+    <div class="toolbar">
+      <select id="item-select" class="filter-select">
+        <option value="">选择商品查看价格记录</option>
+      </select>
+      <button class="btn btn-sm btn-ghost" id="btn-simulate">🔄 模拟价格更新</button>
+    </div>
+
+    <div id="chart-section" class="section hidden">
+      <div class="chart-header">
+        <h2 id="chart-title"></h2>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--primary)"></span>价格</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--success)"></span>最低</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--warning)"></span>目标</span>
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <div class="chart-y-axis" id="chart-y-axis"></div>
+        <div class="chart-area">
+          <svg id="price-svg" class="price-svg"></svg>
+          <div class="chart-bars" id="chart-bars"></div>
+        </div>
+      </div>
+      <div class="chart-x-axis" id="chart-x-axis"></div>
+    </div>
+
+    <div id="stats-section" class="section hidden">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-box-label">当前价格</div>
+          <div class="stat-box-value" id="stat-current">--</div>
+        </div>
+        <div class="stat-box stat-success">
+          <div class="stat-box-label">历史最低</div>
+          <div class="stat-box-value" id="stat-lowest">--</div>
+        </div>
+        <div class="stat-box stat-danger">
+          <div class="stat-box-label">历史最高</div>
+          <div class="stat-box-value" id="stat-highest">--</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">平均价格</div>
+          <div class="stat-box-value" id="stat-avg">--</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">记录次数</div>
+          <div class="stat-box-value" id="stat-count">--</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">7日波动</div>
+          <div class="stat-box-value" id="stat-fluctuation">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="records-section" class="section hidden">
+      <div class="section-header">
+        <h3>价格变动记录</h3>
+        <span class="record-count" id="record-count"></span>
+      </div>
+      <div class="records-table" id="records-table"></div>
+    </div>
+
+    <div id="empty-state" class="empty-state">
+      <div class="icon">📊</div>
+      <div class="title">选择商品查看价格记录</div>
+      <div class="desc">从上方下拉列表中选择一个观察中的商品</div>
+    </div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="price-history.js"></script>
+</body>
+</html>
